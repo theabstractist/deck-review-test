@@ -52,6 +52,32 @@
     return JSON.parse(m[1].trim());
   }
 
+  // Parse a location-like object (real `location` in the browser, mock in tests)
+  // and return { user, repo } if this is a github.io project page, else null.
+  function detectGitHubRepo(loc) {
+    if (!loc || !loc.hostname || !loc.pathname) return null;
+    const m = loc.hostname.match(/^([^.]+)\.github\.io$/i);
+    if (!m) return null;
+    const user = m[1];
+    const parts = loc.pathname.split('/').filter(Boolean);
+    if (parts.length === 0) return null; // user root page, no repo
+    return { user, repo: parts[0] };
+  }
+
+  // Build a GitHub issue creation URL with the payload prefilled in the body.
+  // GitHub's URL prefill caps the full URL near 8000 chars; if the payload would
+  // exceed that, we fall back to omitting the body and relying on clipboard paste.
+  // Returns { url, prefilled: boolean }.
+  function buildIssueUrl({ user, repo, deck, reviewerName, commentCount, payload, label }) {
+    const title = `Review · ${deck} · ${reviewerName || 'Anonymous'} (${commentCount} comment${commentCount === 1 ? '' : 's'})`;
+    const base = `https://github.com/${user}/${repo}/issues/new`;
+    const withBody = `${base}?${new URLSearchParams({ title, labels: label || 'deck-review', body: payload }).toString()}`;
+    if (withBody.length <= 8000) return { url: withBody, prefilled: true };
+    // Too long - skip body, reviewer pastes manually.
+    const noBody = `${base}?${new URLSearchParams({ title, labels: label || 'deck-review' }).toString()}`;
+    return { url: noBody, prefilled: false };
+  }
+
   // ---------- Activation + boot ----------
 
   function shouldActivate() {
@@ -134,8 +160,19 @@
     document.addEventListener('click', _onPinClick, true);
     // Drawer peek toggle
     peek.addEventListener('click', _openDrawer);
-    // Copy review action
-    dock.querySelector('[data-action="copy"]').addEventListener('click', _onCopyReview);
+
+    // Copy review / Submit review action - swap based on environment
+    const ctaBtn = dock.querySelector('[data-action="copy"]');
+    const ghRepo = detectGitHubRepo(location);
+    if (ghRepo) {
+      ctaBtn.innerHTML = '📩 Submit review';
+      ctaBtn.title = `Opens a GitHub issue on ${ghRepo.user}/${ghRepo.repo} with your review prefilled. Payload also copied to clipboard.`;
+      ctaBtn.addEventListener('click', () => _onSubmitToGitHub(ghRepo));
+      console.log(`[deck-review] connected mode: ${ghRepo.user}/${ghRepo.repo}`);
+    } else {
+      ctaBtn.addEventListener('click', _onCopyReview);
+    }
+
     // Escape key - close any open overlay and deactivate any active tool
     document.addEventListener('keydown', _onEscape);
     _setTool('pin');
@@ -517,10 +554,53 @@
     }
   }
 
+  // ---------- Submit to GitHub (connected mode) ----------
+
+  async function _onSubmitToGitHub(ghRepo) {
+    const state = window._deckReviewState;
+    if (!state || state.comments.length === 0) {
+      alert('No comments to submit yet.');
+      return;
+    }
+    const reviewer = _getReviewer();
+    const deck = location.pathname.split('/').pop() || 'deck.html';
+    const payload = buildPayload({
+      deck,
+      reviewer,
+      comments: state.comments.map(c => ({
+        id: c.id, slide: c.slide, anchor: c.anchor, body: c.body, created_at: c.created_at,
+      })),
+      exported_at: new Date().toISOString(),
+    });
+
+    // Belt-and-suspenders: copy to clipboard too, so reviewer can paste manually if needed.
+    try { await navigator.clipboard.writeText(payload); } catch {}
+
+    const { url, prefilled } = buildIssueUrl({
+      user: ghRepo.user, repo: ghRepo.repo,
+      deck, reviewerName: reviewer.name,
+      commentCount: state.comments.length, payload,
+    });
+
+    if (!prefilled) {
+      // Payload too long to prefill - tell the reviewer to paste manually.
+      alert('Review payload is too large to prefill into the GitHub URL. The full payload was copied to your clipboard - paste it into the new issue body that opens.');
+    }
+
+    window.open(url, '_blank', 'noopener');
+
+    const btn = state.dock.querySelector('[data-action="copy"]');
+    const original = btn.innerHTML;
+    btn.innerHTML = '✓ Opening issue';
+    setTimeout(() => { btn.innerHTML = original; }, 1800);
+  }
+
   return {
     deriveInitials,
     buildPayload,
     parsePayload,
+    detectGitHubRepo,
+    buildIssueUrl,
     _autoInit,
     _boot,
   };
