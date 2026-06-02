@@ -243,30 +243,43 @@
     // startContainer may be a Text node (typical click-drag) or an Element (e.g., triple-click).
     // For Text nodes use the parent Element as the target; for Elements use the container itself.
     const sc = range.startContainer;
-    const target = sc.nodeType === 3 ? sc.parentElement : sc;
-    const slideEl = target && target.closest && target.closest('[data-slide-id]');
+    const sourceParent = sc.nodeType === 3 ? sc.parentElement : sc;
+    const slideEl = sourceParent && sourceParent.closest && sourceParent.closest('[data-slide-id]');
     if (!slideEl) return;
+
+    // Capture the highlighted text BEFORE wrapping, so the snippet reflects the actual selection
+    // (not the entire parent element's text content).
+    const highlightedText = range.toString().trim();
 
     // Wrap selection in a <span class="dr-highlight">
     const span = document.createElement('span');
     span.className = 'dr-highlight';
+    let crossesBoundary = false;
     try {
       range.surroundContents(span);
     } catch {
       // surroundContents fails on partial selections crossing elements; fall back: insert mark manually
+      crossesBoundary = true;
       const frag = range.extractContents();
       span.appendChild(frag);
       range.insertNode(span);
     }
     sel.removeAllRanges();
 
+    // Anchor target = the source-DOM parent element (so the selector resolves in the saved HTML),
+    // EXCEPT when the selection crossed element boundaries — then the span sits as a sibling of
+    // text fragments and the source-parent is no longer the right anchor.
+    const anchorTarget = crossesBoundary ? span : sourceParent;
+
     const rect = span.getBoundingClientRect();
     _openCommentInput({
       pageX: rect.right + window.scrollX,
       pageY: rect.top + window.scrollY,
-      target: span,
+      target: anchorTarget,
       slideEl,
       coords: null, // highlights anchor by selector + text, not coords
+      // Use the highlighted text itself as the snippet, not the parent element's full textContent.
+      textSnippet: highlightedText.slice(0, 60),
       // If the user cancels/Escs/abandons this comment, unwrap the highlight
       // so the deck DOM returns to its original state.
       onCancel: () => _unwrapHighlight(span),
@@ -281,7 +294,7 @@
     parent.normalize();
   }
 
-  function _openCommentInput({ pageX, pageY, target, slideEl, coords, onCancel }) {
+  function _openCommentInput({ pageX, pageY, target, slideEl, coords, textSnippet, onCancel }) {
     // If there's already an open input with unsaved text, ignore this attempt
     // (avoids losing the reviewer's in-progress comment on a stray click).
     const existing = document.querySelector('.dr-input');
@@ -334,7 +347,7 @@
       const comment = {
         id: `c${_commentCounter}`,
         slide: slideEl.dataset.slideId,
-        anchor: _buildAnchor(target, slideEl, coords),
+        anchor: _buildAnchor(target, slideEl, coords, textSnippet),
         body,
         created_at: new Date().toISOString(),
         _pageX: pageX,
@@ -347,11 +360,15 @@
     });
   }
 
-  function _buildAnchor(target, slideEl, coords) {
+  function _buildAnchor(target, slideEl, coords, snippetOverride) {
     return {
       review_id: target.getAttribute('data-review-id') || null,
       selector: _cssSelector(target, slideEl),
-      text_snippet: (target.textContent || '').trim().slice(0, 60),
+      // For highlights, caller passes the highlighted text explicitly. For pins, we derive
+      // the snippet from the clicked element's text content.
+      text_snippet: typeof snippetOverride === 'string'
+        ? snippetOverride
+        : (target.textContent || '').trim().slice(0, 60),
       coords: coords || null,
     };
   }
