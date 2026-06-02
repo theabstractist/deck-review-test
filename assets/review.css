@@ -103,6 +103,32 @@
 body.dr-pin-mode { cursor: crosshair; }
 body.dr-pin-mode * { cursor: crosshair !important; }
 
+/* Picker tool - inspect-element style hover outline */
+body.dr-pick-mode { cursor: crosshair; }
+body.dr-pick-mode * { cursor: crosshair !important; }
+.dr-pick-overlay {
+  position: fixed;
+  pointer-events: none;
+  border: 2px solid #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25);
+  z-index: 2147483600;
+  transition: all 0.06s ease-out;
+}
+.dr-pick-label {
+  position: absolute;
+  top: -22px;
+  left: 0;
+  background: #f59e0b;
+  color: #1a1a1a;
+  font: 10px ui-monospace, 'SF Mono', Menlo, monospace;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
 .dr-highlight {
   background: rgba(245, 158, 11, 0.25);
   border-bottom: 2px solid #f59e0b;

@@ -129,8 +129,9 @@
     const dock = document.createElement('div');
     dock.className = 'dr-dock';
     dock.innerHTML = `
-      <button class="dr-dock-btn dr-active" data-tool="pin" title="Pin tool">📍</button>
-      <button class="dr-dock-btn" data-tool="highlight" title="Highlight tool">✎</button>
+      <button class="dr-dock-btn dr-active" data-tool="pick" title="Pick element (hover to highlight, click to anchor a comment)">🎯</button>
+      <button class="dr-dock-btn" data-tool="pin" title="Pin tool (drop a pin anywhere, including whitespace)">📍</button>
+      <button class="dr-dock-btn" data-tool="highlight" title="Highlight text (select text to anchor a comment)">✎</button>
       <div class="dr-dock-sep"></div>
       <div class="dr-dock-count">0 comments</div>
       <div class="dr-dock-sep"></div>
@@ -154,6 +155,9 @@
     });
     // Pin-place handler (capture phase so we beat deck event handlers)
     document.addEventListener('click', _onStageClick, true);
+    // Picker tool - hover highlight + click to anchor
+    document.addEventListener('mousemove', _onPickMove);
+    document.addEventListener('click', _onPickClick, true);
     // Highlight-tool selection handler
     document.addEventListener('mouseup', _onTextSelect);
     // Pin click → open popover (capture phase, runs before _onStageClick's slide check)
@@ -175,7 +179,8 @@
 
     // Escape key - close any open overlay and deactivate any active tool
     document.addEventListener('keydown', _onEscape);
-    _setTool('pin');
+    // Picker is the default tool - more precise than pin, more deliberate than highlight.
+    _setTool('pick');
 
     console.log('[deck-review] UI mounted');
   }
@@ -188,6 +193,7 @@
       n.remove();
     });
     document.querySelectorAll('.dr-popover, .dr-drawer').forEach(n => n.remove());
+    _clearPickOverlay();
     // Deactivate any tool so the cursor returns to normal
     if (_activeTool) _setTool(_activeTool); // toggling current tool returns to null
   }
@@ -203,6 +209,9 @@
     if (name && name === _activeTool) name = null;
     _activeTool = name;
     document.body.classList.toggle('dr-pin-mode', name === 'pin');
+    document.body.classList.toggle('dr-pick-mode', name === 'pick');
+    // Clear any lingering picker overlay when switching away from picker
+    if (name !== 'pick') _clearPickOverlay();
     const state = window._deckReviewState;
     if (!state) return;
     state.dock.querySelectorAll('[data-tool]').forEach(btn => {
@@ -232,6 +241,76 @@
       target: e.target,
       slideEl,
       coords: { x: +xRel.toFixed(4), y: +yRel.toFixed(4) },
+    });
+  }
+
+  // ---------- Picker tool (inspect-element style) ----------
+
+  let _pickOverlay = null;
+  let _pickHoverEl = null;
+
+  function _clearPickOverlay() {
+    if (_pickOverlay) {
+      _pickOverlay.remove();
+      _pickOverlay = null;
+    }
+    _pickHoverEl = null;
+  }
+
+  function _pickShouldIgnore(target) {
+    return !!(target.closest && (
+      target.closest('.dr-root')
+      || target.closest('.dr-pin')
+      || target.closest('.dr-input')
+      || target.closest('.dr-popover')
+      || target.closest('.dr-drawer')
+      || target.closest('.dr-pick-overlay')
+    ));
+  }
+
+  function _onPickMove(e) {
+    if (_activeTool !== 'pick') { _clearPickOverlay(); return; }
+    if (_pickShouldIgnore(e.target)) { _clearPickOverlay(); return; }
+    const slideEl = e.target.closest('[data-slide-id]');
+    if (!slideEl) { _clearPickOverlay(); return; }
+    if (e.target === _pickHoverEl) return;  // throttle - no change
+    _pickHoverEl = e.target;
+
+    const rect = e.target.getBoundingClientRect();
+    if (!_pickOverlay) {
+      _pickOverlay = document.createElement('div');
+      _pickOverlay.className = 'dr-pick-overlay';
+      _pickOverlay.innerHTML = '<div class="dr-pick-label"></div>';
+      document.body.appendChild(_pickOverlay);
+    }
+    _pickOverlay.style.left = `${rect.left}px`;
+    _pickOverlay.style.top = `${rect.top}px`;
+    _pickOverlay.style.width = `${rect.width}px`;
+    _pickOverlay.style.height = `${rect.height}px`;
+
+    const tag = e.target.tagName.toLowerCase();
+    const id = e.target.getAttribute('data-review-id');
+    const cls = (e.target.className || '').toString().split(/\s+/).filter(Boolean).find(c => !c.startsWith('dr-'));
+    const label = tag + (id ? `[data-review-id="${id}"]` : (cls ? `.${cls}` : ''));
+    _pickOverlay.querySelector('.dr-pick-label').textContent = label;
+  }
+
+  function _onPickClick(e) {
+    if (_activeTool !== 'pick') return;
+    if (_pickShouldIgnore(e.target)) return;
+    const slideEl = e.target.closest('[data-slide-id]');
+    if (!slideEl) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    _clearPickOverlay();
+
+    _openCommentInput({
+      pageX: e.pageX,
+      pageY: e.pageY,
+      target: e.target,
+      slideEl,
+      coords: null, // picker anchors by element, not coords
     });
   }
 
