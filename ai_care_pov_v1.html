@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>AI-native care delivery — POV</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #050a10;
+      color: #e8eef3;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.4;
+    }
+    section {
+      min-height: 100vh;
+      padding: 80px 96px 96px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    section + section { border-top: 1px solid rgba(255,255,255,0.06); }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #6aa6c9;
+      margin-bottom: 32px;
+    }
+    .eyebrow .num {
+      display: inline-block;
+      color: #f59e0b;
+      margin-right: 14px;
+    }
+
+    h1 {
+      font-size: clamp(48px, 6vw, 88px);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.02;
+      max-width: 18ch;
+      margin-bottom: 32px;
+    }
+    h1 em {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-weight: 400;
+      color: #86d3a8;
+    }
+    h2 {
+      font-size: clamp(32px, 3.5vw, 52px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      max-width: 20ch;
+      margin-bottom: 24px;
+    }
+    .lede {
+      font-size: clamp(18px, 1.5vw, 22px);
+      line-height: 1.55;
+      color: #b9c6d3;
+      max-width: 62ch;
+    }
+
+    /* Slide 1 - cover */
+    .cover .meta {
+      position: absolute;
+      top: 40px;
+      left: 96px;
+      right: 96px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(232, 238, 243, 0.5);
+    }
+    .cover .meta strong { color: #e8eef3; font-weight: 600; }
+    .cover-mark {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b, #86d3a8);
+      margin-bottom: 48px;
+    }
+    .cover .footer {
+      position: absolute;
+      bottom: 40px;
+      left: 96px;
+      right: 96px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(232, 238, 243, 0.5);
+    }
+
+    /* Slide 2 - market stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 48px;
+      margin-top: 56px;
+      max-width: 920px;
+    }
+    .stat {
+      border-top: 1px solid rgba(255,255,255,0.12);
+      padding-top: 20px;
+    }
+    .stat .num {
+      font-size: clamp(48px, 5vw, 72px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .stat .num em {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-weight: 400;
+      color: #86d3a8;
+    }
+    .stat .label {
+      font-size: 13px;
+      line-height: 1.4;
+      color: #6aa6c9;
+      max-width: 22ch;
+    }
+
+    /* Slide 3 - three moves */
+    .moves {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      margin-top: 56px;
+      max-width: 1100px;
+    }
+    .move {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 28px;
+    }
+    .move .move-num {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #f59e0b;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .move h3 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    .move p {
+      font-size: 14px;
+      line-height: 1.55;
+      color: #b9c6d3;
+    }
+
+    /* Slide 4 - the bet */
+    .bet {
+      max-width: 760px;
+    }
+    .bet .signature {
+      margin-top: 56px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      color: #6aa6c9;
+    }
+    .bet .signature::before {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: #6aa6c9;
+    }
+
+    /* Decorative gradient blob in corner of each slide */
+    .blob {
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+      pointer-events: none;
+    }
+    .blob-amber { background: #f59e0b; top: -200px; right: -200px; }
+    .blob-mint { background: #86d3a8; bottom: -300px; left: -200px; }
+  </style>
+</head>
+<body>
+
+  <!-- Slide 1: Cover -->
+  <section data-slide-id="slide-01" class="cover">
+    <div class="blob blob-amber"></div>
+    <div class="meta">
+      <span>Namma Studio</span>
+      <span><strong>Point of View</strong></span>
+    </div>
+
+    <div class="cover-mark"></div>
+
+    <h1 data-review-id="hero-headline">AI-prepared care delivery is moving from <em>pilot</em> to <em>scale</em>.</h1>
+    <p class="lede" data-review-id="hero-lede">Foundation models are compressing clinical and operational workflows from days to minutes. The window to build durable advantage is open now.</p>
+
+    <div class="footer">
+      <span>AI x Care · POV draft · June 2026</span>
+      <span>v1 — For review</span>
+    </div>
+  </section>
+
+  <!-- Slide 2: Market -->
+  <section data-slide-id="slide-02">
+    <div class="blob blob-mint"></div>
+    <div class="eyebrow"><span class="num">02</span>The market</div>
+
+    <h2 data-review-id="market-headline">A market large enough to matter, moving faster than most boardrooms have planned for.</h2>
+    <p class="lede">Across pharma, payers, and providers, the shift is visible in three places.</p>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="num" data-review-id="stat-cycle"><em>68%</em></div>
+        <div class="label">faster cycle time on AI-augmented workflows vs. baseline</div>
+      </div>
+      <div class="stat">
+        <div class="num" data-review-id="stat-tam">$4.2<em>B</em></div>
+        <div class="label">addressable in next-gen care orchestration by 2028</div>
+      </div>
+      <div class="stat">
+        <div class="num" data-review-id="stat-engagements">14</div>
+        <div class="label">active Deloitte engagements with an AI layer this quarter</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 3: Three moves -->
+  <section data-slide-id="slide-03">
+    <div class="eyebrow"><span class="num">03</span>The play</div>
+
+    <h2 data-review-id="moves-headline">Three moves separate durable advantage from one-off pilots.</h2>
+    <p class="lede">Pick all three, in this order.</p>
+
+    <div class="moves">
+      <div class="move" data-review-id="move-1">
+        <div class="move-num">Move 01</div>
+        <h3>Anchor on a workflow, not a model.</h3>
+        <p>Pick the highest-friction patient or clinician workflow. Build around it. Models change every six months. Workflows do not.</p>
+      </div>
+      <div class="move" data-review-id="move-2">
+        <div class="move-num">Move 02</div>
+        <h3>Ship a working prototype in 30 days.</h3>
+        <p>Demos beat decks. A prototype with real data and a real user in the loop earns the next conversation. A PowerPoint earns a meeting.</p>
+      </div>
+      <div class="move" data-review-id="move-3">
+        <div class="move-num">Move 03</div>
+        <h3>Design for the audit, not just the user.</h3>
+        <p>FDA, EMA, internal compliance. Build traceability into the experience from day one. Retrofitting governance is where pilots die.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 4: The bet -->
+  <section data-slide-id="slide-04">
+    <div class="blob blob-amber"></div>
+    <div class="eyebrow"><span class="num">04</span>The bet</div>
+
+    <div class="bet">
+      <h2 data-review-id="bet-headline">We win this by treating AI as <em>infrastructure</em>, not a feature.</h2>
+      <p class="lede" data-review-id="bet-body">The teams who treat AI as a deliverable will keep shipping POCs. The teams who treat it as the substrate underneath every workflow will own the next decade of care delivery. Lilly should be in that second camp by Q4.</p>
+
+      <div class="signature">POV draft · June 2026</div>
+    </div>
+  </section>
+
+  <script src="./assets/review.js" data-review-mode="dev"></script>
+</body>
+</html>
