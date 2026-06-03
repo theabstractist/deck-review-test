@@ -535,7 +535,7 @@
     pop.innerHTML = `
       <div class="dr-pop-head">
         <div class="dr-avatar">${_escapeHtml(reviewer.initials || '?')}</div>
-        <div class="dr-pop-name">${_escapeHtml(reviewer.name || 'Anonymous')}</div>
+        <div class="dr-pop-name">${_escapeHtml(reviewer.name || 'Anonymous')} <button class="dr-pop-rename" type="button" title="Change your name">✎</button></div>
         <div class="dr-pop-time">${_escapeHtml(ago)}</div>
       </div>
       <div class="dr-pop-body">${_escapeHtml(comment.body)}</div>
@@ -549,6 +549,16 @@
     pop.querySelector('.dr-pop-delete').addEventListener('click', (ev) => {
       ev.stopPropagation();
       _deleteComment(comment.id);
+    });
+
+    pop.querySelector('.dr-pop-rename').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const newName = prompt('Change your name:', reviewer.name || '');
+      if (newName !== null) {
+        const trimmed = newName.trim();
+        try { localStorage.setItem('dr_reviewer_name', trimmed); } catch {}
+        pop.remove();
+      }
     });
 
     // Click outside to close

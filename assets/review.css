@@ -151,7 +151,13 @@ body.dr-pick-mode * { cursor: crosshair !important; }
   font-size: 10px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
 }
-.dr-pop-name { font-size: 12px; font-weight: 600; }
+.dr-pop-name { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+.dr-pop-rename {
+  background: transparent; border: 0; color: #aaa;
+  font-size: 10px; cursor: pointer; padding: 0 2px;
+  line-height: 1;
+}
+.dr-pop-rename:hover { color: #f59e0b; }
 .dr-pop-time { font-size: 11px; color: #888; margin-left: auto; }
 .dr-pop-body { font-size: 13px; line-height: 1.45; color: #333; }
 .dr-pop-anchor {
